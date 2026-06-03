@@ -106,11 +106,7 @@ single-node setup (mirror node, explorer, relay).
 > [System Readiness](/docs/simple-solo-setup/system-readiness#hardware-requirements) for
 > the full multi-node requirements.
 
-When finished, destroy the network as usual:
-
-```bash
-solo one-shot multi destroy
-```
+For multi-node teardown, run `solo one-shot multi destroy`.
 
 {{< /details >}}
 
@@ -204,3 +200,13 @@ If you are using Solo 0.62 or earlier, the default port-forward targets differ:
 Open `http://localhost:8080` in your browser to explore your network.
 
 > **Note:** `localhost:5551` is the direct Mirror Node REST service, accessible only via manual `kubectl port-forward`, and is being phased out. Always use the ingress-based port (`8081` for Solo 0.62 and earlier, `38081` for Solo 0.63+).
+
+## Tear down your network
+
+When you are finished, destroy the network to free up resources:
+
+```bash
+solo one-shot single destroy
+```
+
+For a full teardown procedure including failure recovery, see the [Cleanup](/docs/simple-solo-setup/cleanup) guide. For granular stop/start and management options, see [Managing Your Network](/docs/simple-solo-setup/managing-your-network).

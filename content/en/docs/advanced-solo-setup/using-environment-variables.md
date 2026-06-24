@@ -294,6 +294,7 @@ the full feature and the `solo cache image` commands.
 | `ENABLE_IMAGE_CACHE` | Set to `false` to disable the image cache during `solo one-shot` deploys. **Requires Solo v0.78.0 or later** (earlier releases have an inverted-logic bug in this flag). | enabled
 | `SOLO_NO_CACHE` | Set to `true` to skip the image pull during an npm global install. | enabled
 | `HOMEBREW_NO_SOLO_CACHE` | Set to any value to skip the image pull during a Homebrew install. | enabled
+| `KIND_DOCKER_REGISTRY_MIRRORS` | Comma-separated list of Docker Hub mirror registries tried in order before falling back to `docker.io`. When unset, Solo reads mirrors from `resources/kind-config.yaml`; if that yields nothing, `hub.mirror.docker.lat.ope.eng.hashgraph.io` is used. | `hub.mirror.docker.lat.ope.eng.hashgraph.io`
 
 > **Note:** The cached component versions follow the same environment-variable
 > mechanism as [Pinning Component Versions](#pinning-component-versions) above -

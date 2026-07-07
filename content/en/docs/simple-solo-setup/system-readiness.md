@@ -223,7 +223,15 @@ Run Solo natively from **Windows PowerShell**. Run every command below in a Powe
    wsl --install Ubuntu
    ```
 
-2. Install Homebrew for Linux:
+2. Install build tools required by Homebrew:
+
+    ```sh
+    sudo apt-get install build-essential procps curl file git
+    ```
+
+    > **Note:** These are the [Linux prerequisites for Homebrew](https://docs.brew.sh/Homebrew-on-Linux). Without `build-essential`, `brew install hiero-ledger/tools/solo` fails with `Error: ... must be built from source. Install Clang or run brew install gcc`. Only run this command on a trusted system.
+
+3. Install Homebrew for Linux:
 
     ```sh
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -236,18 +244,18 @@ Run Solo natively from **Windows PowerShell**. Run every command below in a Powe
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
     ```
 
-3. Install Docker Desktop for Windows:
+4. Install Docker Desktop for Windows:
     - Download from: [https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop)
     - Enable WSL2 integration: Docker Desktop > Settings > Resources > WSL Integration.
     - Allocate at least 12 GB of memory: Docker Desktop > Settings > Resources > Memory.
 
-4. Install Solo:
+5. Install Solo:
 
     ```sh
     brew install hiero-ledger/tools/solo
     ```
 
-5. Verify the installation:
+6. Verify the installation:
 
     ```sh
     solo --version
@@ -294,6 +302,13 @@ with a previous installation - clean up your environment and reinstall:
 - To **upgrade an existing install**, install a **specific version**, or switch
   between Homebrew and npm, see
   [Upgrading an existing Solo installation](/docs/simple-solo-setup/upgrading-solo).
+- **macOS "mounts denied" error on Apple Silicon**: If `solo one-shot single deploy`
+  fails immediately with a **"mounts denied"** or **"path is not shared from the host"**
+  error, add `/opt/homebrew` to Docker Desktop's File Sharing list:
+  **Settings → Resources → File Sharing → +** → add `/opt/homebrew` → **Apply & Restart**.
+  This can occur on Apple Silicon Macs (M1/M2/M3/M4) when Homebrew's install path
+  (`/opt/homebrew`) is not included in Docker Desktop's shared directories.
+  Intel Mac users (Homebrew path `/usr/local`) are not affected.
 - **WSL2 fails to install** (for example, `wsl --install` reports
   `HCS_E_HYPERV_NOT_INSTALLED`): WSL2 requires hardware virtualization and the
   Virtual Machine Platform feature. See Microsoft's

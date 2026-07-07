@@ -177,20 +177,20 @@ Add-Content $PROFILE '$env:CONSENSUS_NODE_VERSION = "v0.73.0"'
 
 ## Component Versions
 
-| Environment Variable | Description | Default Value
-| --- | --- | ---
-| `CONSENSUS_NODE_VERSION` | [Release version](https://github.com/hiero-ledger/hiero-consensus-node/releases) of the Consensus Node to use | `v0.74.0`
-| `BLOCK_NODE_VERSION` | [Release version](https://github.com/hiero-ledger/hiero-block-node/releases) of the Block Node to use | `0.36.0`
-| `MIRROR_NODE_VERSION` | [Release version](https://github.com/hiero-ledger/hiero-mirror-node/releases) of the Mirror Node to use | `v0.157.0`
-| `EXPLORER_VERSION` | [Release version](https://github.com/hiero-ledger/hiero-mirror-node-explorer/releases) of the Explorer to use | `26.1.0`
-| `RELAY_VERSION` | [Release version](https://github.com/hiero-ledger/hiero-json-rpc-relay/releases) of the JSON-RPC Relay to use | `0.77.0`
-| `INGRESS_CONTROLLER_VERSION` | [Release version](https://haproxy-ingress.github.io/) of the HAProxy Ingress Controller to use | `0.14.5`
-| `SOLO_CHART_VERSION` | Release version of the Solo Helm charts to use | `0.64.0`
-| `SOLO_CHEETAH_VERSION` | Image version for the solo-deployment chart's Cheetah component | `0.4.5`
-| `SOLO_CONTAINERS_VERSION` | Image version for the solo-deployment chart's Solo containers component | `0.46.0`
-| `MINIO_OPERATOR_VERSION` | Release version of the MinIO Operator to use | `7.1.1`
-| `PROMETHEUS_STACK_VERSION` | Release version of the Prometheus Stack to use | `52.0.1`
-| `GRAFANA_AGENT_VERSION` | Release version of the Grafana Agent to use | `0.27.1`
+| Environment Variable | Description
+| --- | ---
+| `CONSENSUS_NODE_VERSION` | [Release version](https://github.com/hiero-ledger/hiero-consensus-node/releases) of the Consensus Node to use
+| `BLOCK_NODE_VERSION` | [Release version](https://github.com/hiero-ledger/hiero-block-node/releases) of the Block Node to use
+| `MIRROR_NODE_VERSION` | [Release version](https://github.com/hiero-ledger/hiero-mirror-node/releases) of the Mirror Node to use
+| `EXPLORER_VERSION` | [Release version](https://github.com/hiero-ledger/hiero-mirror-node-explorer/releases) of the Explorer to use
+| `RELAY_VERSION` | [Release version](https://github.com/hiero-ledger/hiero-json-rpc-relay/releases) of the JSON-RPC Relay to use
+| `INGRESS_CONTROLLER_VERSION` | [Release version](https://haproxy-ingress.github.io/) of the HAProxy Ingress Controller to use
+| `SOLO_CHART_VERSION` | Release version of the Solo Helm charts to use
+| `SOLO_CHEETAH_VERSION` | Image version for the solo-deployment chart's Cheetah component
+| `SOLO_CONTAINERS_VERSION` | Image version for the solo-deployment chart's Solo containers component
+| `MINIO_OPERATOR_VERSION` | Release version of the MinIO Operator to use
+| `PROMETHEUS_STACK_VERSION` | Release version of the Prometheus Stack to use
+| `GRAFANA_AGENT_VERSION` | Release version of the Grafana Agent to use
 
 > **Tip:** To pin component versions for a `solo one-shot single deploy`, prefix
 > the command with these variables. See the
@@ -296,7 +296,6 @@ the full feature and the `solo cache image` commands.
 | `ENABLE_IMAGE_CACHE` | Set to `false` to disable the image cache during `solo one-shot` deploys. **Requires Solo v0.78.0 or later** (earlier releases have an inverted-logic bug in this flag). | enabled
 | `SOLO_NO_CACHE` | Set to `true` to skip the image pull during an npm global install. | enabled
 | `HOMEBREW_NO_SOLO_CACHE` | Set to any value to skip the image pull during a Homebrew install. | enabled
-| `KIND_DOCKER_REGISTRY_MIRRORS` | Comma-separated list of Docker Hub mirror registries tried in order before falling back to `docker.io`. When unset, Solo reads mirrors from `resources/kind-config.yaml`; if that yields nothing, `hub.mirror.docker.lat.ope.eng.hashgraph.io` is used. | `hub.mirror.docker.lat.ope.eng.hashgraph.io`
 
 > **Note:** The cached component versions follow the same environment-variable
 > mechanism as [Pinning Component Versions](#pinning-component-versions) above -

@@ -151,28 +151,41 @@ holding cluster-admin, or silently intercept traffic to your Kubernetes API serv
 `subprocess.additionalEnvironmentVariables` extends what Solo forwards to `helm` and `kubectl`,
 so anyone able to edit the file can widen what those commands receive. Because **you** create
 this file, Solo does not own its permissions — it checks them instead, and refuses to apply the
-settings with an error if the file or its directory is a symbolic link, is not owned by you, or
-is writable by group or other users.
+settings with an error if the file, its directory, or **any directory above it** is a symbolic
+link, is not owned by you, or is writable by group or other users. It reads the file through a
+descriptor opened without following symlinks and validates that descriptor, so the file cannot be
+swapped between the check and the read.
 
 Keep both owner-only:
 
 {{< tabpane text=true >}}
 {{% tab header="Bash / Zsh" lang="bash" %}}
 ```bash
+# Secure the directory as well as the file: write access to the directory is enough to
+# replace the file inside it. Solo also checks every parent directory up to the filesystem root.
 chmod 700 ~/.solo
 chmod 600 ~/.solo/solo-config.yaml
 ```
 {{% /tab %}}
 {{% tab header="PowerShell" lang="powershell" %}}
 ```powershell
-# NTFS ACLs replace POSIX mode bits; grant only the current user
+# NTFS ACLs replace POSIX mode bits. Secure the directory as well as the file: write access to
+# the directory is enough to replace the file inside it.
+icacls "$HOME\.solo" /inheritance:r /grant:r "$($env:USERNAME):(OI)(CI)F"
 icacls "$HOME\.solo\solo-config.yaml" /inheritance:r /grant:r "$($env:USERNAME):(F)"
 ```
 {{% /tab %}}
 {{< /tabpane >}}
 
-On Windows there are no POSIX mode bits, so Solo checks only that the path is not a symbolic
-link; use the ACL command above to keep the file owner-only.
+On Windows, Solo reads the DACL with `icacls` and refuses the file if any principal other than
+you, `SYSTEM`, `Administrators` or `CREATOR OWNER` holds write access. Inherit-only entries are
+ignored, since they apply to items created later rather than to the path itself.
+
+{{% alert title="Windows support is not yet verified on Windows" color="warning" %}}
+The ACL checks described here are implemented but have not been exercised on a real Windows
+machine, only reasoned about and unit-tested on POSIX. Treat Windows behaviour as provisional and
+please report anything that misbehaves.
+{{% /alert %}}
 {{% /alert %}}
 
 ## Managed Kubernetes and workload identity

@@ -41,12 +41,16 @@ Select-String -Path "$HOME\.solo\logs\solo.log" -Pattern "MY_VARIABLE"
 {{% /tab %}}
 {{< /tabpane >}}
 
-A withheld variable appears in a line like:
+Solo writes a summary line followed by one or more lines carrying the names, so your variable
+appears on a `withheld from` line rather than in the summary:
 
 ```text
-Withheld 83 environment variable(s) from 'helm' commands because they are not on the
-allowlist for that command: AI_AGENT, ..., MY_VARIABLE, ...
+[19:45:49.621] INFO: Withheld 83 environment variable(s) from 'helm' commands because they are not on the allowlist for that command:
+[19:45:49.621] INFO:   withheld from 'helm': AI_AGENT, APPLICATION_INSIGHTS_NO_STATSBEAT, ..., MY_VARIABLE, ...
 ```
+
+Searching for the variable name finds the second line, which also tells you which command withheld
+it. To see everything withheld from one command instead, search for `withheld from 'helm'`.
 
 This is logged at `info`, so it is present in the log by default — you do not need to re-run
 with `--debug`. It is emitted once per command type per run, and long lists are split across

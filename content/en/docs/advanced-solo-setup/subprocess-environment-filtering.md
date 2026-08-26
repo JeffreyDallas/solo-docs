@@ -151,10 +151,25 @@ holding cluster-admin, or silently intercept traffic to your Kubernetes API serv
 `subprocess.additionalEnvironmentVariables` extends what Solo forwards to `helm` and `kubectl`,
 so anyone able to edit the file can widen what those commands receive. Because **you** create
 this file, Solo does not own its permissions — it checks them instead, and refuses to apply the
-settings with an error if the file, its directory, or **any directory above it** is a symbolic
-link, is not owned by you, or is writable by group or other users. It reads the file through a
-descriptor opened without following symlinks and validates that descriptor, so the file cannot be
-swapped between the check and the read.
+settings with an error if the file itself is a symbolic link, is not owned by you, or is writable
+by group or other users. It applies a similar check to the directories above the file, and reads
+the file through a descriptor opened without following symlinks, validating that descriptor rather
+than the path.
+
+What that does and does not guarantee, stated precisely:
+
+* **The file itself** is checked and read through the same descriptor, so its contents cannot be
+  swapped between the check and the read.
+* **The directories above it** are checked for a static misconfiguration — a group-writable
+  `SOLO_HOME`, for instance. This is *not* race-free: someone who already has write access to one
+  of those directories could replace a component between the check and the open. Closing that
+  would require component-by-component opens, which Node's filesystem API does not offer.
+* On POSIX the directory walk reaches the filesystem root, and accepts directories owned by you or
+  by root, plus sticky directories such as `/tmp`. On Windows it stops before the volume root,
+  because `C:\` legitimately carries broad write grants.
+
+In short: this protects you from a misconfigured or shared `SOLO_HOME`, not from an attacker who
+already holds write access somewhere on the path to it.
 
 Keep both owner-only:
 
@@ -181,10 +196,12 @@ On Windows, Solo reads the DACL with `icacls` and refuses the file if any princi
 you, `SYSTEM`, `Administrators` or `CREATOR OWNER` holds write access. Inherit-only entries are
 ignored, since they apply to items created later rather than to the path itself.
 
-{{% alert title="Windows support is not yet verified on Windows" color="warning" %}}
-The ACL checks described here are implemented but have not been exercised on a real Windows
-machine, only reasoned about and unit-tested on POSIX. Treat Windows behaviour as provisional and
-please report anything that misbehaves.
+{{% alert title="Windows support is not yet usable" color="warning" %}}
+The ACL checks described here are implemented but have **not** been exercised on a real Windows
+machine — only reasoned about and unit-tested on POSIX. The Windows guarantee is also weaker: the
+volume root is not inspected, and the symlink check on the file is a check-then-open rather than
+an atomic no-follow open. Do not rely on `subprocess.additionalEnvironmentVariables` on Windows
+yet; please report what you find if you try it.
 {{% /alert %}}
 {{% /alert %}}
 

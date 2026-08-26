@@ -158,8 +158,10 @@ than the path.
 
 What that does and does not guarantee, stated precisely:
 
-* **The file itself** is checked and read through the same descriptor, so its contents cannot be
-  swapped between the check and the read.
+* **The file itself** — on POSIX only — is checked and read through the same descriptor, so its
+  contents cannot be swapped between the check and the read. On Windows there is no equivalent
+  no-follow open, so the symlink check is a check-then-open and carries a small race; see the
+  Windows note below.
 * **The directories above it** are checked for a static misconfiguration — a group-writable
   `SOLO_HOME`, for instance. This is *not* race-free: someone who already has write access to one
   of those directories could replace a component between the check and the open. Closing that

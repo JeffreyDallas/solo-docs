@@ -1,0 +1,134 @@
+---
+title: "Subprocess Environment Filtering"
+weight: 2
+description: >
+  How Solo decides which environment variables reach the external commands it runs
+  (helm, kubectl, kind, container engines), how to tell when a variable was withheld,
+  and how to forward an additional variable when a platform requires one.
+categories: ["Reference", "Advanced"]
+tags: ["advanced", "operator", "configuration", "security"]
+type: docs
+---
+
+## Overview
+
+Solo runs external commands on your behalf — `helm`, `kubectl`, `kind`, `docker`/`podman`,
+`npm`, `gh` and `brew`. It does **not** hand those commands your whole environment. Each
+command receives only the variables it is known to need, built from an allowlist.
+
+The reason is that Solo is frequently run from a shell or CI runner holding credentials that
+have nothing to do with deploying a network — registry tokens, cloud keys, SSH agent sockets.
+Passing the whole environment would forward all of it to every tool, and onward to anything
+those tools spawn: Helm plugins, kubectl credential plugins, package lifecycle scripts.
+
+Filtering is deliberately **deny-by-default**. A variable that is not on the allowlist is not
+forwarded, even if it looks harmless.
+
+## Checking whether a variable was withheld
+
+Solo records what it filtered. Search your Solo log for the variable name:
+
+```bash
+grep MY_VARIABLE ~/.solo/logs/solo.log
+```
+
+A withheld variable appears in a line like:
+
+```text
+Withheld 83 environment variable(s) from 'helm' commands because they are not on the
+allowlist for that command: AI_AGENT, ..., MY_VARIABLE, ...
+```
+
+This is logged at `info`, so it is present in the log by default — you do not need to re-run
+with `--debug`. It is emitted once per command type per run.
+
+If your variable is in that list and the tool needs it, forward it explicitly as below.
+
+## Forwarding an additional variable
+
+Add the exact variable name to `subprocess.additionalEnvironmentVariables` in your Solo
+config file, under the command that needs it:
+
+```yaml
+subprocess:
+  additionalEnvironmentVariables:
+    helm:
+      - MY_PLATFORM_SETTING
+    kubectl:
+      - MY_PLATFORM_SETTING
+```
+
+Recognised command keys are `generic`, `kubectl`, `helm`, `kind`, `containerEngine`, `brew`,
+`npm` and `githubCli`.
+
+### Scope and syntax rules
+
+* **Exact names only.** Wildcards and prefixes are not supported. `AWS_*` will not work; list
+  each name.
+* **Per command.** A variable listed under `helm` reaches `helm` only. There is no "all
+  commands" list — a variable a credential plugin needs has no business reaching `npm` or a
+  container engine.
+* **Config file only.** Unlike every other Solo setting, this one cannot be set through a
+  `SOLO_*` environment variable. A setting that relaxes environment filtering must not itself
+  be controllable by the environment being filtered. Attempts to set it via the environment are
+  ignored, with a warning.
+
+### Names that are always refused
+
+Some variables are refused no matter what the config file says, because they change how a
+spawned tool loads code, whom it trusts, or where it fetches credentials. Solo logs a warning
+naming each refused entry rather than ignoring it silently.
+
+| Family | Examples |
+| --- | --- |
+| Loader and interpreter hooks | `LD_PRELOAD`, `LD_LIBRARY_PATH`, `DYLD_INSERT_LIBRARIES`, `NODE_OPTIONS`, `BASH_ENV`, `PYTHONPATH`, `PERL5OPT`, `RUBYOPT`, `PS4`, `GIT_SSH_COMMAND`, `EDITOR` |
+| TLS trust overrides | `SSL_CERT_FILE`, `SSL_CERT_DIR`, `CURL_CA_BUNDLE`, `NODE_EXTRA_CA_CERTS`, `REQUESTS_CA_BUNDLE`, `AWS_CA_BUNDLE`, `NODE_TLS_REJECT_UNAUTHORIZED` |
+| Credential and endpoint redirection | `AWS_ENDPOINT_URL`, `AWS_CONFIG_FILE`, `AWS_SHARED_CREDENTIALS_FILE`, `AZURE_CLIENT_SECRET` |
+
+These would let anyone able to write your Solo config file run arbitrary code inside a process
+holding cluster-admin, or silently intercept traffic to your Kubernetes API server.
+
+{{% alert title="Your config file is trusted input" color="warning" %}}
+`subprocess.additionalEnvironmentVariables` extends what Solo forwards. Treat `~/.solo` as
+sensitive and keep it readable and writable only by you — Solo restricts it on creation, but
+that can be undone. Anyone who can edit it can influence what Solo passes to external tools.
+{{% /alert %}}
+
+## Managed Kubernetes and workload identity
+
+Solo forwards the variables the AWS credential plugin needs, so **EKS IRSA** works without any
+configuration:
+
+`AWS_ROLE_ARN`, `AWS_WEB_IDENTITY_TOKEN_FILE`, `AWS_REGION`, `AWS_DEFAULT_REGION`,
+`AWS_STS_REGIONAL_ENDPOINTS`, `AWS_PROFILE`
+
+**GKE and AKS are not yet covered.** The variables their credential plugins need have not been
+verified against a real cluster, and adding unverified names risks both breakage and security
+holes, so they are not in the built-in allowlist. Until they are verified, forward them
+yourself:
+
+```yaml
+subprocess:
+  additionalEnvironmentVariables:
+    kubectl:
+      - GOOGLE_APPLICATION_CREDENTIALS
+      - USE_GKE_GCLOUD_AUTH_PLUGIN
+    helm:
+      - GOOGLE_APPLICATION_CREDENTIALS
+      - USE_GKE_GCLOUD_AUTH_PLUGIN
+```
+
+If you confirm the required set for GKE or AKS on a real cluster, please open an issue on
+[hiero-ledger/solo](https://github.com/hiero-ledger/solo/issues) so it can be added to the
+built-in allowlist.
+
+Note that `AZURE_AUTHORITY_HOST` and `AWS_ENDPOINT_URL` are intentionally excluded from the
+built-in list: they redirect which authority or endpoint the credential plugin contacts.
+Sovereign clouds that genuinely need a non-default authority can add `AZURE_AUTHORITY_HOST`
+explicitly, which makes it a deliberate local decision rather than something inherited silently
+from the surrounding environment.
+
+## See also
+
+* [Using Environment Variables]({{< relref "using-environment-variables.md" >}}) — variables
+  that configure Solo itself, as opposed to the ones Solo passes on to external tools.

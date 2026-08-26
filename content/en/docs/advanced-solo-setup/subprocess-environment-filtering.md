@@ -40,7 +40,21 @@ allowlist for that command: AI_AGENT, ..., MY_VARIABLE, ...
 ```
 
 This is logged at `info`, so it is present in the log by default — you do not need to re-run
-with `--debug`. It is emitted once per command type per run.
+with `--debug`. It is emitted once per command type per run, and long lists are split across
+several lines so that every name remains searchable.
+
+Two bounds apply, so that a hostile or unusual environment cannot forge log entries or fill your
+disk:
+
+* Names are only listed if they look like ordinary identifiers (letters, digits, `_`, `.`, `-`,
+  `()`, up to 64 characters). Anything else is counted rather than printed — the line ends with
+  something like `(3 with non-identifier names omitted)`.
+* At most 2000 names are listed per command type. Beyond that the line ends with
+  `(N further name(s) omitted)`. No ordinary environment comes close to this; if you hit it, the
+  variable is still filtered exactly as described, it is simply not enumerated.
+
+If your variable is not listed but also is not reaching the tool, forward it explicitly as
+below — the two bounds above affect only what is *reported*, never what is *forwarded*.
 
 If your variable is in that list and the tool needs it, forward it explicitly as below.
 
@@ -60,6 +74,9 @@ subprocess:
 
 Recognised command keys are `generic`, `kubectl`, `helm`, `kind`, `containerEngine`, `brew`,
 `npm` and `githubCli`.
+
+The file is `solo.yaml` in your Solo home directory (`~/.solo` by default, or `$SOLO_HOME`).
+It is optional — if you do not have one, nothing changes.
 
 ### Scope and syntax rules
 
@@ -83,7 +100,11 @@ naming each refused entry rather than ignoring it silently.
 | --- | --- |
 | Loader and interpreter hooks | `LD_PRELOAD`, `LD_LIBRARY_PATH`, `DYLD_INSERT_LIBRARIES`, `NODE_OPTIONS`, `BASH_ENV`, `PYTHONPATH`, `PERL5OPT`, `RUBYOPT`, `PS4`, `GIT_SSH_COMMAND`, `EDITOR` |
 | TLS trust overrides | `SSL_CERT_FILE`, `SSL_CERT_DIR`, `CURL_CA_BUNDLE`, `NODE_EXTRA_CA_CERTS`, `REQUESTS_CA_BUNDLE`, `AWS_CA_BUNDLE`, `NODE_TLS_REJECT_UNAUTHORIZED` |
-| Credential and endpoint redirection | `AWS_ENDPOINT_URL`, `AWS_CONFIG_FILE`, `AWS_SHARED_CREDENTIALS_FILE`, `AZURE_CLIENT_SECRET` |
+| Credential and endpoint redirection | `AWS_ENDPOINT_URL` and every `AWS_ENDPOINT_URL_<SERVICE>` form such as `AWS_ENDPOINT_URL_STS`, `AWS_CONFIG_FILE`, `AWS_SHARED_CREDENTIALS_FILE`, `AZURE_CLIENT_SECRET` |
+
+Matching is case-insensitive, and the `LD_`, `DYLD_` and `AWS_ENDPOINT_URL` families are refused
+by prefix rather than by exact name — `AWS_ENDPOINT_URL_STS` in particular takes precedence over
+the global endpoint setting and would otherwise redirect the EKS credential exchange.
 
 These would let anyone able to write your Solo config file run arbitrary code inside a process
 holding cluster-admin, or silently intercept traffic to your Kubernetes API server.

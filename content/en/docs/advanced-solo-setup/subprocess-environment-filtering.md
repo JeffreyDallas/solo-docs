@@ -28,9 +28,18 @@ forwarded, even if it looks harmless.
 
 Solo records what it filtered. Search your Solo log for the variable name:
 
+{{< tabpane text=true >}}
+{{% tab header="Bash / Zsh" lang="bash" %}}
 ```bash
 grep MY_VARIABLE ~/.solo/logs/solo.log
 ```
+{{% /tab %}}
+{{% tab header="PowerShell" lang="powershell" %}}
+```powershell
+Select-String -Path "$HOME\.solo\logs\solo.log" -Pattern "MY_VARIABLE"
+```
+{{% /tab %}}
+{{< /tabpane >}}
 
 A withheld variable appears in a line like:
 
@@ -56,6 +65,11 @@ disk:
 If your variable is not listed but also is not reaching the tool, forward it explicitly as
 below — the two bounds above affect only what is *reported*, never what is *forwarded*.
 
+If your config file is present but unusable — malformed YAML, unreadable, or with permissions
+Solo will not trust — Solo fails with an error naming the file rather than starting up as if the
+file were not there. A setting you believe is applied but silently is not would be worse than a
+clear failure.
+
 If your variable is in that list and the tool needs it, forward it explicitly as below.
 
 ## Forwarding an additional variable
@@ -75,9 +89,26 @@ subprocess:
 Recognised command keys are `generic`, `kubectl`, `helm`, `kind`, `containerEngine`, `brew`,
 `npm` and `githubCli`.
 
-The file is `solo-config.yaml` in your Solo home directory (`~/.solo` by default, or
-`$SOLO_HOME`). It is optional — if you do not have one, nothing changes. Create it if it is not
-already there.
+The file is `solo-config.yaml` in your Solo home directory. It is optional — if you do not have
+one, nothing changes. Create it if it is not already there.
+
+The default location is `~/.solo` (`%USERPROFILE%\.solo` on Windows). Override it with
+`SOLO_HOME`:
+
+{{< tabpane text=true >}}
+{{% tab header="Bash / Zsh" lang="bash" %}}
+```bash
+export SOLO_HOME=/path/to/solo-home
+ls -l "$SOLO_HOME/solo-config.yaml"
+```
+{{% /tab %}}
+{{% tab header="PowerShell" lang="powershell" %}}
+```powershell
+$env:SOLO_HOME = "C:\path\to\solo-home"
+Get-Item "$env:SOLO_HOME\solo-config.yaml" | Format-List Name, Length, LastWriteTime
+```
+{{% /tab %}}
+{{< /tabpane >}}
 
 {{% alert title="Not solo.yaml" color="info" %}}
 The similarly named `~/.solo/solo.yaml` is a leftover from older Solo versions and holds an
@@ -116,10 +147,32 @@ the global endpoint setting and would otherwise redirect the EKS credential exch
 These would let anyone able to write your Solo config file run arbitrary code inside a process
 holding cluster-admin, or silently intercept traffic to your Kubernetes API server.
 
-{{% alert title="Your config file is trusted input" color="warning" %}}
-`subprocess.additionalEnvironmentVariables` extends what Solo forwards. Treat `~/.solo` as
-sensitive and keep it readable and writable only by you — Solo restricts it on creation, but
-that can be undone. Anyone who can edit it can influence what Solo passes to external tools.
+{{% alert title="Solo verifies the file before trusting it" color="warning" %}}
+`subprocess.additionalEnvironmentVariables` extends what Solo forwards to `helm` and `kubectl`,
+so anyone able to edit the file can widen what those commands receive. Because **you** create
+this file, Solo does not own its permissions — it checks them instead, and refuses to apply the
+settings with an error if the file or its directory is a symbolic link, is not owned by you, or
+is writable by group or other users.
+
+Keep both owner-only:
+
+{{< tabpane text=true >}}
+{{% tab header="Bash / Zsh" lang="bash" %}}
+```bash
+chmod 700 ~/.solo
+chmod 600 ~/.solo/solo-config.yaml
+```
+{{% /tab %}}
+{{% tab header="PowerShell" lang="powershell" %}}
+```powershell
+# NTFS ACLs replace POSIX mode bits; grant only the current user
+icacls "$HOME\.solo\solo-config.yaml" /inheritance:r /grant:r "$($env:USERNAME):(F)"
+```
+{{% /tab %}}
+{{< /tabpane >}}
+
+On Windows there are no POSIX mode bits, so Solo checks only that the path is not a symbolic
+link; use the ACL command above to keep the file owner-only.
 {{% /alert %}}
 
 ## Managed Kubernetes and workload identity

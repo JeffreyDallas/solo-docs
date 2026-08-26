@@ -61,7 +61,7 @@ If your variable is in that list and the tool needs it, forward it explicitly as
 ## Forwarding an additional variable
 
 Add the exact variable name to `subprocess.additionalEnvironmentVariables` in your Solo
-config file, under the command that needs it:
+config file — `~/.solo/solo-config.yaml` — under the command that needs it:
 
 ```yaml
 subprocess:
@@ -75,8 +75,15 @@ subprocess:
 Recognised command keys are `generic`, `kubectl`, `helm`, `kind`, `containerEngine`, `brew`,
 `npm` and `githubCli`.
 
-The file is `solo.yaml` in your Solo home directory (`~/.solo` by default, or `$SOLO_HOME`).
-It is optional — if you do not have one, nothing changes.
+The file is `solo-config.yaml` in your Solo home directory (`~/.solo` by default, or
+`$SOLO_HOME`). It is optional — if you do not have one, nothing changes. Create it if it is not
+already there.
+
+{{% alert title="Not solo.yaml" color="info" %}}
+The similarly named `~/.solo/solo.yaml` is a leftover from older Solo versions and holds an
+unrelated `flags:` structure. Some test tooling deletes it automatically, so settings placed
+there would be lost. Use `solo-config.yaml`.
+{{% /alert %}}
 
 ### Scope and syntax rules
 

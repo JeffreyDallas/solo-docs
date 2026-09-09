@@ -103,6 +103,7 @@ Add-Content $PROFILE '$env:CONSENSUS_NODE_VERSION = "v0.73.0"'
 | `NODE_CLIENT_SDK_PING_MAX_RETRIES` | Maximum number of retries for node health pings | `5`
 | `NODE_CLIENT_SDK_PING_RETRY_INTERVAL` | Interval between node health ping retries, in milliseconds | `10000`
 | `NODE_COPY_CONCURRENT` | Number of concurrent threads used when copying files to a node | `4`
+| `EXPERIMENTAL_COPY_WRAPS_LIB_IN_PARALLEL` | Copy the WRAPS proving-key library to every consensus node concurrently during `solo network deploy`, instead of one node at a time. Concurrent copies finish faster on a network deploy with many nodes and ample bandwidth, but can saturate a constrained connection when several multi-hundred-megabyte copies run at once. Accepted values: `true`, `false` | `false`
 | `LOCAL_BUILD_COPY_RETRY` | Number of retries for local build copy operations | `3`
 | `ACCOUNT_UPDATE_BATCH_SIZE` | Number of accounts to update in a single batch operation | `10`
 

@@ -123,6 +123,9 @@ Add-Content $PROFILE '$env:CONSENSUS_NODE_VERSION = "v0.73.0"'
 | `NETWORK_PROXY_MAX_ATTEMPTS` | Maximum number of attempts to check if the network proxy is running | `300`
 | `NETWORK_PROXY_DELAY` | Interval between network proxy checks, in milliseconds | `2000`
 | `NETWORK_DESTROY_WAIT_TIMEOUT` | Maximum wait time for network teardown to complete, in milliseconds | `120`
+| `STATE_DOWNLOAD_STABLE_MAX_ATTEMPTS` | Maximum number of attempts to check whether a consensus node's saved state has stopped changing on disk, before `solo consensus state download` archives it and before `solo consensus network freeze` stops the nodes | `180`
+| `STATE_DOWNLOAD_STABLE_DELAY` | Interval between saved state stability checks, in milliseconds | `2000`
+| `STATE_DOWNLOAD_STABLE_POLLS_REQUIRED` | Number of consecutive checks that must report an unchanged saved state before it is treated as stable | `3`
 
 ---
 
